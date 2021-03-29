@@ -1,5 +1,7 @@
 **.DS_Store
+**.ipynb_checkpoints/
 
 admin/
 resources/
+notebooks/images/
 shuai-draft.m
