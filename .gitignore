@@ -1,5 +1,7 @@
 **.DS_Store
 **.ipynb_checkpoints/
+**/__pycache__/
+git-secret-access-token
 
 admin/
 resources/
