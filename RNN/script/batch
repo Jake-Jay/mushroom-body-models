@@ -1,0 +1,27 @@
+#!/bin/bash
+
+#!/usr/bin/awk END {system("julia " FILENAME)}
+#SBATCH -J cortex
+#SBATCH -n 1
+#SBATCH -a 0-11
+#SBATCH -o cortex-%j.out
+
+N=${2-10}
+range=$(grep '#SBATCH -a.*' $1 | awk '{ print $3 }')
+IFS='-' read FIRST LAST <<< $range
+output=$(grep '#SBATCH -o.*' $1 | awk '{ print $3 }')
+chmod +x $1
+echo "running $1 on $N cores"
+for id in $(seq $FIRST $LAST); do
+    export SLURM_ARRAY_TASK_ID=$id
+    o=$(sed "s/%j/$id/g" <<< $output)
+    ($1 | tee $o) &
+    if [[ $(jobs -r -p | wc -l) -ge $N ]]; then
+        # now there are $N jobs already running, so wait here for any job
+        # to be finished so there is a place to start next one.
+        wait -n
+    fi
+done
+#no more jobs to be started but wait for pending jobs
+#(all need to be finished)
+wait
