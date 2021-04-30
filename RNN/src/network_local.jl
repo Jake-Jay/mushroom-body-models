@@ -11,9 +11,12 @@ Flux.gpu(x) = x
 
 Flux.adapt(T::Type{<:Real}, xs::UnitRange) = xs # prevent f32 conversion
 
+# Input f: a function, xs is the data, returns gradient
 ∂(f, i = 1) = (xs...) -> Zygote.gradient(f, xs...)[i]
 
+# ReLU activation (can change to ReLU)
 af(x, r0, θ) = max(0, r0)*max(tanh.(x - θ), zero(x)) # activation function
+
 
 nargs(f) = methods(f).ms[1].nargs - 1
 
@@ -42,6 +45,17 @@ fI(fs, xs...) = vcat([broadcast(f, [xs[n][i, :] for n in 1:nargs(f)]...) for (i,
 ################################################################################
 # CortexRNN
 
+# + means absolute value
+# wi is the feedforward weights
+# wh is the weights from mbon to mbon
+# Wo is the output weight (set to identity matrix)
+# Output 
+# Mi same shape as Wi each entry needs to be 
+#   1: I or E
+#   -1: I
+# 0: no connection
+# Mh recurrent mask 
+
 # follow notations in Song et al. (2016)
 mutable struct CortexRNNCell{WI, WH, BH, WO, BO, H, M, Θ, F, T}
     Wi⁺::WI # input abs weight
@@ -55,11 +69,11 @@ mutable struct CortexRNNCell{WI, WH, BH, WO, BO, H, M, Θ, F, T}
     Mo::M   # output mask (-1, 0, 1)
     θs::Θ   # parameters of activation functions
     fs::F   # activation functions
-    λΩ::T   # multiplier for vanishing-gradient regularization
-    λH::T   # regularization of the h
-    σi::T   # input noise
+    λΩ::T   # multiplier for vanishing-gradient regularization - maybe not neccesary
+    λH::T   # regularization of the h - maybe not neccesary
+    σi::T   # input noise - might be neccesary - put to zero?
     σh::T   # recur noise
-    α::T    # Δt / (τ = 100ms)
+    α::T    # Δt / (τ = 100ms) - time step
     dt::T   # integration step
 end
 
@@ -85,6 +99,8 @@ function CortexRNNCell(;ni = 0, nh = 300, no = 0,
     bo = something(bo, param(zeros(no)))
     #h = something(h, param(randn(nh, 1)))
     # rescale random matrix norm
+    # rho is the norm
+    # here we are normalising
     for z in [Wi⁺, Wh⁺, Wo⁺, h]
         rmul!(Tracker.data(z), ρ / opnorm(Tracker.data(z)))
     end
@@ -163,6 +179,8 @@ end
 ################################################################################
 # gradient training
 
+# TODO - here is where I input the data, change the lines below
+
 data_index = 6
 println(string(data_index))
 data = matread(string("../../data_3/", data_index, ".mat"))
@@ -179,14 +197,22 @@ weight = cat(zeros(size(y,1), extend, size(y,3)),
 # create model
 #root = get(ENV, "RNN_DATA", joinpath(@__DIR__, "..", "data"))
 
+# TODO Change this according to the connectomics data
 Mi = ones(size(x, 1), size(x, 1));
 
 Mh = ones(size(x, 1), size(x, 1))
+
 #Mh = Mh * diagm([ones(Int(round(size(x1, 1)*EI_ratio/(EI_ratio+1))));
 #    -ones(Int(round(size(x1, 1)/(EI_ratio+1))))])
 Mh = Mh - Diagonal(Mh)
+
+
+#Set Mo to  Diagonal(ones(size(x, 1), size(x, 1)))
+
 Mo = Array([Array(Diagonal(ones(size(y, 1), size(y, 1))))';
     zeros(size(y, 1), size(x, 1)-size(y, 1))']');
+
+
 h, bo = ones(size(x, 1), 1), zeros(size(y, 1))
 
 ρ0 = 1.0

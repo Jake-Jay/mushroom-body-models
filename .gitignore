@@ -1,6 +1,7 @@
 **.DS_Store
 **.ipynb_checkpoints/
 **/__pycache__/
+**.vscode/
 git-secret-access-token
 
 admin/
