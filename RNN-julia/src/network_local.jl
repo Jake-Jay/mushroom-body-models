@@ -46,14 +46,14 @@ fI(fs, xs...) = vcat([broadcast(f, [xs[n][i, :] for n in 1:nargs(f)]...) for (i,
 # CortexRNN
 
 # + means absolute value
-# wi is the feedforward weights
-# wh is the weights from mbon to mbon
-# Wo is the output weight (set to identity matrix)
+# wi is the feedforward weights (input layer weights)
+# wh is the weights from mbon to mbon (hidden layer weights)
+# Wo is the output weight (set to identity matrix since we just want the mbon activity)
 # Output 
-# Mi same shape as Wi each entry needs to be 
-#   1: I or E
+# Mi (input mask) same shape as Wi each entry needs to be 
+#    1: E
 #   -1: I
-# 0: no connection
+#    0: no connection
 # Mh recurrent mask 
 
 # follow notations in Song et al. (2016)
