@@ -211,8 +211,7 @@ Mh = Mh - Diagonal(Mh)
 
 Mo = Array([Array(Diagonal(ones(size(y, 1), size(y, 1))))';
     zeros(size(y, 1), size(x, 1)-size(y, 1))']');
-
-
+    #Diagonal(ones(size(x, 1), size(x, 1)))
 h, bo = ones(size(x, 1), 1), zeros(size(y, 1))
 
 ρ0 = 1.0
@@ -248,7 +247,7 @@ Flux.@epochs 3 Flux.train!(ps, data, opt, Tracker.gradient; cb, logger, verbose 
 end
 
 model1 = Flux.params(model)
-Wi_plus = model1[1]
+Wi_plus = model1[1].data
 Wh_plus = model1[2].data
 bh = model1[3].data
 Wo_plus = model1[4]

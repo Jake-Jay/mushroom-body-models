@@ -237,7 +237,7 @@ Flux.@epochs 2000 Flux.train!(ps, data, opt, Tracker.gradient; cb, logger, verbo
 end
 
 model1 = Flux.params(model)
-Wi_plus = model1[1]
+Wi_plus = model1[1].data
 Wh_plus = model1[2].data
 bh = model1[3].data
 Wo_plus = model1[4]
