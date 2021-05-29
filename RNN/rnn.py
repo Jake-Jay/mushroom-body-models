@@ -17,16 +17,7 @@ class NeuralRNNModule(pl.LightningModule):
 
         # Hyperparameters
         self.lr = lr
-
-        # Define model using built in RNN
-        # self.rnn = nn.RNN(
-        #     input_size=input_dim,
-        #     hidden_size=hidden_dim,
-        #     num_layers=1,
-        #     nonlinearity='tanh',
-        #     bias=True,
-        #     batch_first=True
-        # )
+        self.save_hyperparameters('lr')
 
         # Define model using custom RNN
         self.rnn = NeuralRNN(
@@ -48,6 +39,10 @@ class NeuralRNNModule(pl.LightningModule):
 
         rnn_out, _ = self.rnn(sequence)
         return rnn_out
+    
+    # Using custom or multiple metrics (default_hp_metric=False)
+    def on_train_start(self):
+        self.logger.log_hyperparams({"hp/lr": self.lr})
 
     def training_step(self, batch, batch_idx):
         inputs = batch['dan']     # (neurons, timesteps, batchsize)
@@ -56,7 +51,7 @@ class NeuralRNNModule(pl.LightningModule):
         preds = self(inputs)        # (neurons, timesteps, batchsize)
         loss = self.loss_fcn(preds, outputs)
 
-        self.log('*train_loss', loss)
+        self.log('train/loss', loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -66,18 +61,19 @@ class NeuralRNNModule(pl.LightningModule):
         preds = self(inputs)        # (neurons, timesteps, batchsize)
         loss = self.loss_fcn(preds, outputs)
 
-        self.log('*val_loss', loss)
+        self.log('val/loss', loss)
+        self.log("hp/lr", self.lr)
         return loss
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(
             params=self.parameters(), lr=self.lr)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, patience=20, verbose=True)
+            optimizer, patience=5, verbose=True)
         return {
             'optimizer': optimizer,
             'lr_scheduler': scheduler,
-            'monitor': '*val_loss'
+            'monitor': 'val/loss'
         }
 
 
