@@ -28,9 +28,9 @@ class MushroomBodyDataset(Dataset):
         
         DATA_DIR = Path(data_dir)
 
-        # Shape of dataset: (15, 3, 9000) = (nodes, time_steps, trials)
-        X = np.load(DATA_DIR / 'X-time-series-from-distribution.npy')
-        Y = np.load(DATA_DIR / 'Y-time-series-from-distribution.npy')
+        # Shape of dataset: (15, 10, 9000) = (nodes, time_steps, trials)
+        X = np.load(DATA_DIR / 'X-exp-time-series-from-distribution.npy')
+        Y = np.load(DATA_DIR / 'Y-exp-time-series-from-distribution.npy')
 
         input_features, timesteps, num_trials = X.shape
 
