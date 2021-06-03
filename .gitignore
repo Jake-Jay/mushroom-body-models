@@ -8,3 +8,7 @@ admin/
 resources/
 notebooks/images/
 shuai-draft.m
+rnn/tb_logs/
+rnn/lightning_logs/
+rnn/rnn_experiments.ipynb
+data/
