@@ -77,6 +77,77 @@ class NeuralRNNModule(pl.LightningModule):
         }
 
     
+class MaskedNeuralRNNModule(pl.LightningModule):
+    def __init__(self, input_mask, hidden_mask, lr=0.001, **additional_kwargs):
+        """
+        Inputs:
+            - input_mask: mask for the input->hidden weights of the RNN
+            - hidden_mask: mask for the hidden->hidden weights of the RNN
+            - lr: learning rate
+        """
+        super().__init__()
+
+        # Hyperparameters
+        self.lr = lr
+        self.save_hyperparameters('lr')
+
+        # Define model using custom RNN
+        self.rnn = MaskedNeuralRNN(
+            input_mask=input_mask,
+            output_mask=hidden_mask,
+            nonlinearity='tanh',
+        )
+
+        # Define loss function
+        self.loss_fcn = nn.MSELoss()
+
+    def forward(self, sequence):
+        """
+        Inputs
+            sequence: A long tensor of Size ([8, 3, 15])
+        Outputs:
+            output: A long tensor of Size ([8, 3, 15])
+        """
+
+        rnn_out, _ = self.rnn(sequence)
+        return rnn_out
+    
+    # Using custom or multiple metrics (default_hp_metric=False)
+    def on_train_start(self):
+        self.logger.log_hyperparams({"hp/lr": self.lr})
+
+    def training_step(self, batch, batch_idx):
+        inputs = batch['dan']     # (neurons, timesteps, batchsize)
+        outputs = batch['mbon']    # (neurons, timesteps, batchsize)
+
+        preds = self(inputs)        # (neurons, timesteps, batchsize)
+        loss = self.loss_fcn(preds, outputs)
+
+        self.log('train/loss', loss)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        inputs = batch['dan']      # (neurons, timesteps, batchsize)
+        outputs = batch['mbon']    # (neurons, timesteps, batchsize)
+
+        preds = self(inputs)        # (neurons, timesteps, batchsize)
+        loss = self.loss_fcn(preds, outputs)
+
+        self.log('val/loss', loss)
+        self.log("hp/lr", self.lr)
+        return loss
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(
+            params=self.parameters(), lr=self.lr)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, patience=5, verbose=True)
+        return {
+            'optimizer': optimizer,
+            'lr_scheduler': scheduler,
+            'monitor': 'val/loss'
+        }
+    
 class MaskedNeuralRNN(nn.Module):
     def __init__(self, input_mask, output_mask, nonlinearity="tanh"):
         super().__init__()
