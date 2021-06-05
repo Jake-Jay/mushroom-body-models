@@ -141,7 +141,7 @@ class MaskedNeuralRNNModule(pl.LightningModule):
         optimizer = torch.optim.Adam(
             params=self.parameters(), lr=self.lr)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, patience=5, verbose=True)
+            optimizer, patience=1, verbose=True)
         return {
             'optimizer': optimizer,
             'lr_scheduler': scheduler,
