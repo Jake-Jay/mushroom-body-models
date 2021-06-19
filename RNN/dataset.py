@@ -8,31 +8,32 @@ from torch.utils.data.dataset import Dataset
 
 
 class MushroomBodyDataset(Dataset):
-    def __init__(self, data_dir:str = '../data', shuffle=True):
+    def __init__(self, input_dataset, output_dataset, shuffle=False):
         """
         Inputs:
-            data: list of tuples (input time series, output time series)
+            input_dataset: path to the input dataset
+            output_datset: path to the ouput dataset
         """
         
-        self.data = self.load_data(data_dir)
+        self.data = self.load_data(input_dataset, output_dataset)
 
         if shuffle: 
             np.random.shuffle(self.data)
 
-    def load_data(self, data_dir):
+    def load_data(self, input_dataset, output_dataset):
         """
+        Inputs:
+            data_dir: path to the datasets
+            input_dataset: path to the input dataset
+            output_datset: path to the ouput dataset
         Outputs:
             data: A list of tuples (DAN time series, MBON time series)
                 Each time series has shape (nodes, time steps)
         """
-        
-        DATA_DIR = Path(data_dir)
 
-        # Shape of dataset: (15, 10, 9000) = (nodes, time_steps, trials)
-        X = np.load(DATA_DIR / 'X-exp-time-series-from-distribution.npy')
-        Y = np.load(DATA_DIR / 'Y-exp-time-series-from-distribution.npy')
-
-        input_features, timesteps, num_trials = X.shape
+        # Shape of dataset: (15, 10, xxx) = (nodes, time_steps, num_trials)
+        X = np.load(input_dataset)
+        Y = np.load(output_dataset)
 
         # return as tuple with input output pairs of shape (timesteps, input_features)
         return [(X[:,:,i].T, Y[:,:,i].T) for i in range(X.shape[2])]
