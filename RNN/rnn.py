@@ -49,24 +49,28 @@ class NeuralRNNModule(pl.LightningModule):
     def forward(self, sequence):
         """
         Inputs
-            sequence: A long tensor of Size ([8, 3, 15])
+            sequence: A long tensor of Size ([batch_size, time_steps, 15])
         Outputs:
-            output: A long tensor of Size ([8, 3, 15])
+            output: A long tensor of Size ([batch_size, time_steps, 15])
         """
 
         rnn_out, _ = self.rnn(sequence)
-        return rnn_out
+        
+        # Find the average activity over the time series         
+        average_activity = rnn_out.mean(axis=1)
+        return average_activity
     
     # Using custom or multiple metrics (default_hp_metric=False)
     def on_train_start(self):
         self.logger.log_hyperparams({"hp/lr": self.lr})
 
     def training_step(self, batch, batch_idx):
-        inputs = batch['dan']     # (neurons, timesteps, batchsize)
-        outputs = batch['mbon']    # (neurons, timesteps, batchsize)
+        inputs = batch['dan']      # (batchsize, neurons, timesteps)
+        outputs = batch['mbon']    # (batchsize, neurons)
 
-        preds = self(inputs)        # (neurons, timesteps, batchsize)
-        loss = self.loss_fcn(preds, outputs)
+        pred_av_activity = self(inputs)        # (batchsize, neurons)
+
+        loss = self.loss_fcn(pred_av_activity, outputs)
 
         self.log('train/loss', loss)
         return loss

@@ -31,12 +31,15 @@ class MushroomBodyDataset(Dataset):
                 Each time series has shape (nodes, time steps)
         """
 
-        # Shape of dataset: (15, 10, xxx) = (nodes, time_steps, num_trials)
+        # Shape of input dataset: (15, 10, xxx) = (nodes, time_steps, num_trials)
         X = np.load(input_dataset)
+        
+        # Shape of output dataset: (xxx, 15) = (num_trials, nodes)
         Y = np.load(output_dataset)
+        Y = Y.T
 
         # return as tuple with input output pairs of shape (timesteps, input_features)
-        return [(X[:,:,i].T, Y[:,:,i].T) for i in range(X.shape[2])]
+        return [(X[:,:,i].T, Y[:,i].T) for i in range(X.shape[2])]
     
     def __len__(self):
         return len(self.data)
