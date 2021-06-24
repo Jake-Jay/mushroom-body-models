@@ -1,3 +1,7 @@
+# Modelling the Fruit Fly Mushroom Body
+
+The Mushroom Body (MB) is established as a site for associative learning in insects. The structure is split into 15 compartments, demarcated by the presence of specific mushroom body output neurons (MBONs), and dopamin- ergic neurons (DANs). Each of these com- partments provides a site for parallel learning. Dopamine has been shown to convey essential information about the valence of odours to each of these compartments. Similarly it has been shown that MBONs use this valency informa- tion in their representation of odours to initiate an appropriate behavioural response. We sought to model the relationship between DANs and MBONs. Several models are investigated rang- ing from a simple one-to-one linear model to a recurrent model where MBONs feed back into the MB compartments. Given that the connec- tome of the Drosophila Melanogaster MB has recently become available, the models’ learned weights are compared with these known synap- tic connections.
+
 # Most Relevent notebooks:
 
 Note that all paths in this document are given as relative paths from the Notebook in which they are called and NOT from the project root directory.
@@ -75,3 +79,7 @@ The Notebooks should be run in order since they often depend on the output from 
         - '../data/Y-test-exp-time-series-from-distribution.npy'
         - `../mbon-connectomics.npy`
     - generates:
+
+# Contributions
+
+This research was conducted as part of an internship at the Max Plank Institute for Brain Research in Julijana Gjorgieva's group. It was supervised by Prof. Gjorgieva and Shuai Shao.
