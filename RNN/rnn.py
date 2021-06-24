@@ -8,12 +8,18 @@ from masked_linear import CustomizedLinear
 
 
 class NeuralRNNModule(pl.LightningModule):
-    def __init__(self, masked=False, lr=0.001, **kwargs):
+    def __init__(self, masked=False, recurrence=True, lr=0.001, **kwargs):
         """
         Inputs:
-            - input_dim: shape of input time series
-            - hidden_dim: hidden_size of the rnn layer
+            - masked: mask the linear layers according to connectome
+            - recurrence: whether or not to feed back MBON activity
             - lr: learning rate
+            - kwargs['input_dim']: shape of input time series
+            - kwargs['hidden_dim']: hidden_size of the rnn layer
+            - kwargs['input_mask']: required if masked. Specifies shape of input.
+                                    represents the DAN-MBON connections.
+            - kwargs['hidden_mask']: required if masked. Specifies shape of output
+                                     represents the MBON-MBON connections.
         """
         super().__init__()
 
@@ -41,6 +47,7 @@ class NeuralRNNModule(pl.LightningModule):
                 input_size=self.input_dim,
                 hidden_size=self.hidden_dim,
                 nonlinearity=non_linearity,
+                recurrence=recurrence
             )
 
         # Define loss function
@@ -51,12 +58,12 @@ class NeuralRNNModule(pl.LightningModule):
         Inputs
             sequence: A long tensor of Size ([batch_size, time_steps, 15])
         Outputs:
-            output: A long tensor of Size ([batch_size, time_steps, 15])
+            output: Average activity over output time series ([batch_size, 15])
         """
 
         rnn_out, _ = self.rnn(sequence)
         
-        # Find the average activity over the time series         
+        # Find the average activity over the predicted time series         
         average_activity = rnn_out.mean(axis=1)
         return average_activity
     
@@ -89,16 +96,20 @@ class NeuralRNNModule(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(
             params=self.parameters(), lr=self.lr)
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, patience=1, verbose=True)
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer, 
+            step_size=10, 
+            gamma=0.1,
+            verbose=True
+        )
+
         return {
             'optimizer': optimizer,
             'lr_scheduler': scheduler,
-            'monitor': 'val/loss'
         }
 
 class NeuralRNN(nn.Module):
-    def __init__(self, input_size=15, hidden_size=15, nonlinearity="tanh"):
+    def __init__(self, input_size=15, hidden_size=15, nonlinearity="tanh", recurrence=True):
         super().__init__()
 
         """
@@ -110,6 +121,7 @@ class NeuralRNN(nn.Module):
 
         self.hidden_size = hidden_size
         self.input_size = input_size
+        self.recurrence = recurrence
 
         self.W_xh = nn.Linear(self.input_size, self.hidden_size, bias=True)
         self.W_hh = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
@@ -131,8 +143,6 @@ class NeuralRNN(nn.Module):
         - h: Final hidden vetor of sequence(1, batch_size, hidden_size)
         """
 
-        # TODO implement weights matrix that will remove certain recurrent connections
-
         # Hidden State initialization
         h = torch.zeros(
             (1, x.size(0), self.hidden_size), 
@@ -142,8 +152,16 @@ class NeuralRNN(nn.Module):
 
         h_seq = []
         for xt in x.unbind(1):
-            # update hidden state
-            h = self.activation(self.W_hh(h) + self.W_xh(xt))
+            
+            if self.recurrence:
+                # update hidden state like a normal RNN
+                h = self.activation(self.W_hh(h) + self.W_xh(xt))    
+            else:
+                # Replace the above line with the two below if you want to
+                # remove all recurrence MBON connections and non-linearities.
+                h = self.W_xh(xt)
+                h = h.expand(1,-1,-1)
+            
             h_seq.append(h)
 
         # Stack the h_seq list as a tensor along dim 0
