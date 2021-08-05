@@ -130,6 +130,8 @@ class NeuralRNN(nn.Module):
             self.activation = nn.Tanh() 
         elif nonlinearity == "relu":
             self.activation = nn.ReLU()
+        elif nonlinearity == "none":
+            self.activation = lambda x: x
         else:
             raise ValueError("Unrecognized activation. Allowed activations: tanh or relu")
 

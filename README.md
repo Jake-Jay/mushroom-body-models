@@ -17,23 +17,23 @@ The Notebooks should be run in order since they often depend on the output from 
     - generates: '../data/siju-cleaned-expanded-pivot.pkl'
     
 - `preprocess-hige-expanded.ipynb`
-    - input: '../data/hije_mbon_response.mat'
-    - generates: '../data/hije-cleaned-expanded-pivot.pkl'
+    - input: '../data/hige_mbon_response.mat'
+    - generates: '../data/hige-cleaned-expanded-pivot.pkl'
 
 - `build-datadistributions.ipynb`
     - description: create a set of distributions to model the activity in each compartment for each stimuli for both DANs and MBONs (this is to increase the size of the given dataset).
     - inputs:
         - '../data/siju-cleaned-expanded-pivot.pkl'
-        - '../data/hije-cleaned-expanded-pivot.pkl'
+        - '../data/hige-cleaned-expanded-pivot.pkl'
     - generates: 
         - '../models/siju_lognorm_fits.json'
-        - '../models/hije_lognorm_fits.json'
+        - '../models/hige_lognorm_fits.json'
 
 - `build-timeseriesdata.ipynb`
     - description: create train, validation, and test datasets to fit the linear and recurrent models. This uses the distributions generated in `build-datadistributions.ipynb`
     - inputs:
         - '../models/siju_lognorm_fits.json'
-        - '../models/hije_lognorm_fits.json'
+        - '../models/hige_lognorm_fits.json'
     - generates:
         - Scalar data (for linear models):
             - '../data/X-train-from-distribution.npy'
